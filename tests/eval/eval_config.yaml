@@ -1,0 +1,83 @@
+# Studio eval: deterministic trace checks + two local Gemini judges.
+# Cases carry "SIZES: WxH,..." and "EXPECT: ..." in their reference text.
+metrics_to_run:
+  - delivered
+  - gates_before_delivery
+  - sizes_match
+  - cost_usd
+  - reply_quality
+  - design_quality
+
+custom_metrics:
+  - name: delivered
+    custom_function: |
+      def evaluate(instance):
+          events = [e for t in (instance.get("agent_data") or {}).get("turns", []) for e in t.get("events", [])]
+          ok = any(
+              (p.get("function_response") or {}).get("name") == "deliver"
+              and ((p["function_response"].get("response") or {}).get("status") == "delivered")
+              for e in events for p in ((e.get("content") or {}).get("parts") or [])
+          )
+          return {"score": 1.0 if ok else 0.0}
+
+  # Before the first successful delivery, every gate the case names ran (a bash command containing
+  # it, or a tool of that name). Cases without a GATES line need brand-lint, artifact-contract, look.
+  - name: gates_before_delivery
+    custom_function: |
+      import re
+      def evaluate(instance):
+          ref = " ".join(p.get("text", "") for p in (((instance.get("reference") or {}).get("response") or {}).get("parts") or []))
+          m = re.search(r"GATES:\s*([A-Za-z0-9_.,-]+)", ref)
+          gates = m.group(1).split(",") if m else ["brand-lint", "artifact-contract", "look"]
+          seen = dict.fromkeys(gates, False)
+          events = [e for t in (instance.get("agent_data") or {}).get("turns", []) for e in t.get("events", [])]
+          for e in events:
+              for p in ((e.get("content") or {}).get("parts") or []):
+                  fc = p.get("function_call") or {}
+                  cmd = (fc.get("args") or {}).get("command", "") if fc.get("name") == "bash" else ""
+                  for g in gates:
+                      seen[g] = seen[g] or fc.get("name") == g or (bool(cmd) and g in cmd)
+                  fr = p.get("function_response") or {}
+                  if fr.get("name") == "deliver" and (fr.get("response") or {}).get("status") == "delivered":
+                      missing = [k for k, v in seen.items() if not v]
+                      return {"score": round(sum(seen.values()) / len(gates), 3), "explanation": "missing: " + ", ".join(missing) if missing else "all gates ran"}
+          return {"score": 0.0, "explanation": "nothing delivered"}
+
+  # Every requested WxH appears among delivered file paths (html2png names files <stem>-WxH.ext).
+  - name: sizes_match
+    custom_function: |
+      import re
+      def evaluate(instance):
+          ref = " ".join(p.get("text", "") for p in (((instance.get("reference") or {}).get("response") or {}).get("parts") or []))
+          m = re.search(r"SIZES:\s*([0-9x,]*)", ref)
+          want = [s for s in (m.group(1).split(",") if m else []) if s]
+          events = [e for t in (instance.get("agent_data") or {}).get("turns", []) for e in t.get("events", [])]
+          paths = [x for e in events for p in ((e.get("content") or {}).get("parts") or [])
+                   if (p.get("function_call") or {}).get("name") == "deliver"
+                   for x in ((p["function_call"].get("args") or {}).get("paths") or [])]
+          if not want:
+              return {"score": 1.0 if paths else 0.0, "explanation": "no fixed size; delivered %d file(s)" % len(paths)}
+          got = [s for s in want if any(s in x for x in paths)]
+          return {"score": round(len(got) / len(want), 3), "explanation": "delivered %s; wanted %s" % (paths, want)}
+
+  # Spend for the case from the meter's running total in session state (lower is better).
+  - name: cost_usd
+    custom_function: |
+      def evaluate(instance):
+          total = None
+          for t in (instance.get("agent_data") or {}).get("turns", []):
+              for e in t.get("events", []):
+                  u = (e.get("state_delta") or {}).get("usage")
+                  if u:
+                      total = u
+          if not total:
+              return {"score": 0.0, "explanation": "no usage recorded"}
+          return {"score": round(total["cost_usd"], 4),
+                  "explanation": "%d calls, %d in (%d cached), %d out" % (total["calls"], total["in_tok"], total["cached_tok"], total["out_tok"])}
+
+  - name: reply_quality
+    custom_function_file: reply_quality.py
+
+  # Vision judge over the delivered PNGs (pulled from the local sandbox). A signal, not a gate.
+  - name: design_quality
+    custom_function_file: design_quality.py

@@ -1,0 +1,46 @@
+{
+ "eval_cases": [
+  {
+   "eval_case_id": "thumbnail",
+   "prompt": {
+    "role": "user",
+    "parts": [
+     {
+      "text": "YouTube thumbnail for our webinar 'Shipping agents to prod'."
+     }
+    ]
+   },
+   "reference": {
+    "response": {
+     "role": "model",
+     "parts": [
+      {
+       "text": "SIZES: 1280x720\nEXPECT: One 1280x720 thumbnail, legible at small size, on-brand; title text exact."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "eval_case_id": "diagram_flow",
+   "prompt": {
+    "role": "user",
+    "parts": [
+     {
+      "text": "A diagram for our docs, 1600x900: how a request flows: Brief -> Draft -> Brand check -> Review -> Delivered, with Review able to send it back to Draft."
+     }
+    ]
+   },
+   "reference": {
+    "response": {
+     "role": "model",
+     "parts": [
+      {
+       "text": "SIZES: 1600x900\nGATES: viz.mjs,look\nEXPECT: An on-brand flow diagram with the five steps in order and a visible loop from Review back to Draft; labels exact; nothing clipped."
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

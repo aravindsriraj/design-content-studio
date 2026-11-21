@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="gsap.min.js"></script>
+    <style>
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #101418; }
+      #root { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      #title { color: #f6f1e7; font: 600 120px "Inter", sans-serif; letter-spacing: -0.03em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="2" data-width="1920" data-height="1080">
+      <h1 id="title" class="clip" data-start="0" data-duration="2" data-track-index="0">Probe</h1>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#title", { opacity: 0.4, y: 40 }, { opacity: 1, y: 0, duration: 1.5 }, 0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
