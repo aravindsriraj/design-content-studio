@@ -232,3 +232,7 @@ backups/
 .google-agents-cli/
 .DS_Store
 *.log
+
+# Internal working notes (kept locally, not published)
+docs/port-plan.md
+.agents-cli-spec.md

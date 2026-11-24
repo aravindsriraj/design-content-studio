@@ -4,7 +4,7 @@
 designs the piece, checks it against your brand, and hands back finished files: social posts in every size,
 ads, charts, diagrams, PDFs, GIFs, and short films with voiceover and music.
 
-Built on [Google ADK](https://adk.dev) and Gemini, ported from LangChain's open-source
+Built on [Google ADK](https://adk.dev) and Gemini. Inspired by LangChain's open-source
 [design-agent](https://github.com/langchain-ai/design-agent) (see [Credits](#credits)).
 
 ![The workspace: a request on the left, finished files pinned on the right](docs/screenshots/workspace.jpg)
@@ -77,7 +77,7 @@ flowchart LR
 | Web app | Vite + React. Workspace, proof wall, brand and plan panels, landing page | `web/` |
 | Web service | ADK's FastAPI app plus Firebase auth, `/api` routes, billing webhook | `app/fast_api_app.py` |
 | Worker | One Cloud Run Job execution per agent turn, helper, render watch or pipeline; retries resume the same ADK invocation | `app/worker.py`, `app/jobs.py`, `app/tasks.py` |
-| Lead agent | ADK `LlmAgent` on Gemini with design-agent's instructions, skills and tools | `app/agent.py`, `app/prompt.md`, `app/skills/` |
+| Lead agent | ADK `LlmAgent` on Gemini with its instructions, skills and tools | `app/agent.py`, `app/prompt.md`, `app/skills/` |
 | Sandbox | A container per workspace: renderers and gates run here, never on the server | `sandbox/`, `app/sandbox.py`, `app/sandbox_tools/` |
 | Media | Image generation, voiceover, transcription, music | `app/tools.py`, `app/audio.py` |
 | Background work | Helpers, parallel looks, render watchers, multi-step pipelines, check-ins | `app/helpers.py`, `app/looks.py`, `app/renders.py`, `app/pipelines/`, `app/wakeups.py` |
@@ -150,26 +150,25 @@ Everything is in Terraform under `deployment/terraform/single-project/`; `script
 ```
 app/                 the agent and server (Python, Google ADK)
   agent.py           lead agent: model, tools, callbacks
-  skills/            the agent's workflows (SKILL.md), from design-agent and HyperFrames
+  skills/            the agent's workflows (SKILL.md)
   sandbox_tools/     renderers and gates that run inside the sandbox (Node)
-  harness/           vendored design-agent harness pieces
+  harness/           background-work and pipeline harness
 web/                 the web app (Vite + React + TypeScript)
 sandbox/             the sandbox image: runtime shim, Chrome, HyperFrames, ffmpeg, fonts, probe
 deployment/          Terraform
 scripts/             deploy and sandbox-template scripts
 tests/               unit, integration and eval suites
-docs/                setup notes, the port plan, screenshots
+docs/                setup notes and screenshots
 ```
 
 ## Credits
 
-This project ports LangChain's Apache-2.0 [design-agent](https://github.com/langchain-ai/design-agent) to
-Google ADK and Gemini: its skills, gates, instructions and several harness pieces are vendored with changes
-noted in each file. It also builds on [HyperFrames](https://github.com/heygen-com/hyperframes) and the ADK
-long-horizon harness sample. [NOTICE.md](NOTICE.md) lists every component and its license.
+Inspired by LangChain's open-source [design-agent](https://github.com/langchain-ai/design-agent), and
+includes Apache-2.0 components from it (agent skills, rendering checks and parts of the harness), with
+changes noted in each file. It also builds on [HyperFrames](https://github.com/heygen-com/hyperframes) and
+the Google ADK samples. [NOTICE.md](NOTICE.md) lists every component and its license.
 
-**Design Content Studio is an independent project and is not affiliated with, endorsed by or sponsored by
-LangChain, Inc.** LangChain's own design agent is called Content Studio.
+Design Content Studio is an independent project, not affiliated with or endorsed by LangChain, Inc.
 
 ## License
 
